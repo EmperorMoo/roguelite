@@ -14,10 +14,7 @@ async fn main() {
     let dungeon_width: usize = 25;
     let dungeon_height: usize = 18;
     let mut dungeon = vec![vec![0; dungeon_width]; dungeon_height];
-    let room_width = rand::gen_range(8,16);
-    let room_height = rand::gen_range(6,12);
-    let room_x = rand::gen_range(0,dungeon_width - room_width + 1);
-    let room_y = rand::gen_range(0,dungeon_height - room_height + 1);
+
 
     let combat_rooms = vec![
         RoomTemplate {
@@ -35,10 +32,19 @@ async fn main() {
             height: 10,
             shape: RoomShape::Rectangle,
         },
+        RoomTemplate {
+            width: 12,
+            height: 12,
+            shape: RoomShape::Circular,
+        },
     ];
 
     let room_index = rand::gen_range(0, combat_rooms.len());
     let selected_room = &combat_rooms[room_index];
+    let room_width = selected_room.width;
+    let room_height = selected_room.height;
+    let room_x = rand::gen_range(0,dungeon_width - room_width + 1);
+    let room_y = rand::gen_range(0,dungeon_height - room_height + 1);
 
     generate_room(
         &mut dungeon, 
@@ -46,7 +52,7 @@ async fn main() {
         room_y, 
         room_width, 
         room_height,
-        0,
+        &selected_room.shape,
     );
 
     // test to see if macroquad is working
@@ -82,7 +88,7 @@ async fn main() {
             }
         }
 
-        draw_text("Can Speedy Peedy deal a bagiggle wiggle do giggles in spiggle spoo giggles?", 20.0, 20.0, 30.0, WHITE);
+        //draw_text("Can Speedy Peedy deal a bagiggle wiggle do giggles in spiggle spoo giggles?", 20.0, 20.0, 30.0, WHITE);
         
         draw_texture_ex(
             &player_texture,
@@ -156,21 +162,37 @@ fn generate_room(
     start_y: usize,
     room_width: usize,
     room_height: usize,
-    room_shape: u8,
+    room_shape: &RoomShape,
 ) {
 
 let (room_width, room_height) = match room_shape {
-    0 => (room_width, room_height),
-    1 => {
+    RoomShape::Rectangle => (room_width, room_height),
+    RoomShape::Square => {
         let size = room_width.min(room_height);
         (size, size)
     }
-    _ => (room_width, room_height),
+    RoomShape::Circular => (room_width, room_height),
+    RoomShape::Irregular => (room_width, room_height),
 };
 
 for y in start_y..start_y + room_height {
         for x in start_x..start_x + room_width {
-            if y == start_y || y == start_y + room_height - 1 || x == start_x || x == start_x + room_width - 1 {
+            let center_x = room_width as f32 / 2.0;
+            let center_y = room_height as f32 / 2.0;
+
+            let distance_x = (x as f32 + 0.5) - (start_x as f32 + center_x);
+            let distance_y = (y as f32 + 0.5) - (start_y as f32 + center_y);
+
+            let distance = (distance_x * distance_x + distance_y * distance_y).sqrt();
+
+            if matches!(room_shape, RoomShape::Circular) {
+                if distance <= center_x.min(center_y) {
+                    dungeon[y][x] = 2;
+                } else {
+                    dungeon[y][x] = 1;
+                }
+            }
+            else if y == start_y || y == start_y + room_height - 1 || x == start_x || x == start_x + room_width - 1 {
                 dungeon[y][x] = 2;
             } else {
                 dungeon[y][x] = 1;
