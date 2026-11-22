@@ -21,21 +21,25 @@ async fn main() {
             width: 12,
             height: 8,
             shape: RoomShape::Rectangle,
+            doors: vec![DoorDirection::North, DoorDirection::South],
         },
         RoomTemplate {
             width: 10,
             height: 10,
             shape: RoomShape::Square,
+            doors: vec![DoorDirection::East, DoorDirection::West],
         },
         RoomTemplate {
             width: 16,
             height: 10,
             shape: RoomShape::Rectangle,
+            doors: vec![DoorDirection::North, DoorDirection::South, DoorDirection::East],
         },
         RoomTemplate {
             width: 12,
             height: 12,
             shape: RoomShape::Circular,
+            doors: vec![DoorDirection::North, DoorDirection::South, DoorDirection::East, DoorDirection::West],
         },
     ];
 
@@ -53,6 +57,7 @@ async fn main() {
         room_width, 
         room_height,
         &selected_room.shape,
+        &selected_room.doors,
     );
 
     // test to see if macroquad is working
@@ -150,10 +155,18 @@ enum RoomShape {
     Irregular,
 }
 
+enum DoorDirection {
+    North,
+    South,
+    East,
+    West,
+}
+
 struct RoomTemplate {
     width: usize,
     height: usize,
     shape: RoomShape,
+    doors: Vec<DoorDirection>,
 }
 
 fn generate_room(
@@ -163,6 +176,7 @@ fn generate_room(
     room_width: usize,
     room_height: usize,
     room_shape: &RoomShape,
+    room_doors: &[DoorDirection],
 ) {
 
 let (room_width, room_height) = match room_shape {
@@ -186,10 +200,14 @@ for y in start_y..start_y + room_height {
             let distance = (distance_x * distance_x + distance_y * distance_y).sqrt();
 
             if matches!(room_shape, RoomShape::Circular) {
-                if distance <= center_x.min(center_y) {
-                    dungeon[y][x] = 2;
-                } else {
-                    dungeon[y][x] = 1;
+                let radius = center_x.min(center_y) - 0.5;
+
+                if distance <= radius {
+                    if distance >= radius -1.0 {
+                        dungeon[y][x] = 2;
+                    } else {
+                        dungeon[y][x] = 1;
+                    }
                 }
             }
             else if y == start_y || y == start_y + room_height - 1 || x == start_x || x == start_x + room_width - 1 {
@@ -200,7 +218,39 @@ for y in start_y..start_y + room_height {
         }
     }
 
-    dungeon[start_y + room_height - 1][start_x + room_width / 2] = 1; //create a door in the dungeon
+    //let door_y = if matches!(room_shape, RoomShape::Circular) {
+        //start_y + room_height - 2
+    //} else {
+        //start_y + room_height - 1
+    //};
+
+    for door in doors{
+        match door {
+            DoorDirection::North => {
+                dungeon[start_y][start_x + room_width / 2] = 1;
+            }
+            DoorDirection::South => {
+                let door_y = if matches! (room_shape, RoomShape::Circular) {
+                    start_y + room_height - 2
+                } else {
+                    start_y + room_height - 1
+                };
+
+                dungeon[door_y][start_x + room_width / 2] = 1;
+            }
+            DoorDirection::East =>{
+                dungeon[start_y + room_height / 2][start_x + room_width -1] = 1;
+            }
+            DoorDirection::West => {
+                dungeon[start_y + room_height / 2][start_x] = 1;
+            }
+        }
+    }
+
+    for &door_direction in room_doors {
+
+        dungeon[door_y][door_x] = 1; //create a door in the dungeon
+    }
 }
 
 //676767676767676767676767676767
