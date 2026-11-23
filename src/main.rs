@@ -1,5 +1,19 @@
 use macroquad::prelude::*;
+use std::env;
+use std::path::PathBuf;
 
+// This is a helper function that fixes the path for relative paths
+fn resolve_path(relative_path: &str) -> PathBuf {
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let candidate = exe_dir.join(relative_path);
+            if candidate.exists() {
+                return candidate;
+            }
+        }
+    }
+    PathBuf::from(relative_path)
+}
 #[macroquad::main("Number 15: Burger King Foot lettuce.")]
 async fn main() {
     rand::srand(macroquad::miniquad::date::now() as u64);
@@ -14,7 +28,8 @@ async fn main() {
     };
     let player_speed: f32 = 200.0;
     let mut player_facing_left = false;
-    let player_texture = load_texture("assets/characters/warrior/Warrior V1.png").await.unwrap();
+    let player_texture = load_texture(resolve_path("assets/characters/warrior/Warrior V1.png").to_str().unwrap()).await.unwrap();
+    player_texture.set_filter(FilterMode::Nearest);
     let tile_size: f32 = 32.0;
     let dungeon_width: usize = 100;
     let dungeon_height: usize = 100;
