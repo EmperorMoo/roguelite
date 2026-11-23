@@ -7,12 +7,17 @@ async fn main() {
     let mut player_health = 100;
     let mut player_x: f32 = 400.0;
     let mut player_y: f32 = 300.0;
+    let mut camera = Camera2D {
+        target: vec2(player_x + 32.0, player_y + 32.0),
+        zoom: vec2(2.0 / screen_width(), 2.0 / screen_height()),
+        ..Default::default()
+    };
     let player_speed: f32 = 200.0;
     let mut player_facing_left = false;
     let player_texture = load_texture("assets/characters/warrior/Warrior V1.png").await.unwrap();
     let tile_size: f32 = 32.0;
-    let dungeon_width: usize = 25;
-    let dungeon_height: usize = 18;
+    let dungeon_width: usize = 100;
+    let dungeon_height: usize = 100;
     let mut dungeon = vec![vec![0; dungeon_width]; dungeon_height];
 
 
@@ -64,6 +69,55 @@ async fn main() {
     loop {
         clear_background(BLACK);
 
+        if is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) {
+            player_y -= player_speed * get_frame_time();
+        }
+
+        if is_key_down(KeyCode::S) || is_key_down(KeyCode::Down) {
+            player_y += player_speed * get_frame_time();
+            
+        }
+
+        if is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) {
+            player_x -= player_speed * get_frame_time();
+            player_facing_left = true;
+        }
+
+        if is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) {
+            player_x += player_speed * get_frame_time();
+            player_facing_left = false;
+        }
+
+        let view_width = screen_width();
+        let view_height = screen_height();
+
+        camera.zoom = vec2(
+            2.0 / view_width,
+            2.0 / view_height,
+        );
+
+        let half_view_width = view_width / 2.0;
+        let half_view_height = view_height / 2.0;
+
+        let world_width = dungeon_width as f32 * tile_size;
+        let world_height = dungeon_height as f32 * tile_size;
+
+        let camera_x = if world_width > view_width {
+            (player_x + 32.0).clamp(half_view_width, world_width - half_view_width,)
+        } else {
+            world_width / 2.0
+        };
+
+        let camera_y = if world_height > view_height {
+            (player_y + 32.0).clamp(half_view_height, world_height - half_view_height,)
+        } else {
+            world_height / 2.0
+        };
+
+        camera.target = vec2(camera_x, camera_y);
+
+        set_camera(&camera);
+
         for y in 0..dungeon_height {
             for x in 0..dungeon_width {
 
@@ -107,42 +161,27 @@ async fn main() {
             },
         );
 
-        if is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) {
-            player_y -= player_speed * get_frame_time();
-        }
+    
 
-        if is_key_down(KeyCode::S) || is_key_down(KeyCode::Down) {
-            player_y += player_speed * get_frame_time();
-            
-        }
-
-        if is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) {
-            player_x -= player_speed * get_frame_time();
-            player_facing_left = true;
-        }
-
-        if is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) {
-            player_x += player_speed * get_frame_time();
-            player_facing_left = false;
-        }
-
-
-        if player_x < 0.0 {
-            player_x = 0.0;
-        }
-
-        if player_x > screen_width() - 64.0 {
-            player_x = screen_width() - 64.0;
-        }
-
-        if player_y < 0.0 {
-            player_y = 0.0;
-        }
-
-        if player_y > screen_height() - 64.0 {
-            player_y = screen_height() - 64.0;
-        }
+            if player_x < 0.0 {
+                player_x = 0.0;
+            }
         
+
+            if player_x > world_width - 64.0 {
+                player_x = world_width - 64.0;
+            }
+
+            if player_y < 0.0 {
+                player_y = 0.0;
+            }
+
+            if player_y > world_height - 64.0 {
+                player_y = world_height - 64.0;
+            }
+
+        set_default_camera();
+
         next_frame().await;
 
     }
@@ -224,7 +263,7 @@ for y in start_y..start_y + room_height {
         //start_y + room_height - 1
     //};
 
-    for door in doors{
+    for door in room_doors{
         match door {
             DoorDirection::North => {
                 dungeon[start_y][start_x + room_width / 2] = 1;
@@ -247,10 +286,10 @@ for y in start_y..start_y + room_height {
         }
     }
 
-    for &door_direction in room_doors {
+    //for &door_direction in room_doors {
 
-        dungeon[door_y][door_x] = 1; //create a door in the dungeon
-    }
+        //dungeon[door_y][door_x] = 1; //create a door in the dungeon
+    //}
 }
 
 //676767676767676767676767676767
