@@ -6,3 +6,6 @@ Using macroquad for the game engine.
 Coding in Rust.
 I'm still very new to coding so sorry if everything is a mess.
 I will probably be working on this for the rest of Terra.
+
+I plan on implementing wall collision, animations for the character sprite, and making a whole bunch of room templates for the game to pull from.
+Why must we have so many words in the read me?
