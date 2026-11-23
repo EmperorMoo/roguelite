@@ -9,3 +9,7 @@ I will probably be working on this for the rest of Terra.
 
 I plan on implementing wall collision, animations for the character sprite, and making a whole bunch of room templates for the game to pull from.
 Why must we have so many words in the read me?
+
+<p align="center">
+    <img src="assets\characters\warrior\Warrior V1.png" alt="Number 15: Burger King Foot Lettuce" width="520" style="image-rendering: pixelated;">
+</p>
