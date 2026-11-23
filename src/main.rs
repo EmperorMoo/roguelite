@@ -155,7 +155,7 @@ async fn main() {
             player_y,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(vec2(64.0, 64.0)),
+                dest_size: Some(vec2(128.0, 128.0)),
                 flip_x: player_facing_left,
                 ..Default::default()
             },
