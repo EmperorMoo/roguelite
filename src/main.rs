@@ -50,20 +50,143 @@ async fn main() {
             
             obstacles: vec![
                 // Corner pillars
-                Obstacle { x: 6, y: 5, width: 3, height: 3},
-                Obstacle { x: 31, y: 5, width: 3, height: 3 },
+                Obstacle { 
+                    x: 6, 
+                    y: 5, 
+                    width: 3, 
+                    height: 3,
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+                Obstacle { 
+                    x: 31, 
+                    y: 5, 
+                    width: 3, 
+                    height: 3,
+                    obstacle_type:
+                ObstacleType::Pillar
+                },
 
                 // Lower pillars
-                Obstacle { x: 6, y: 22, width: 3, height: 3 },
-                Obstacle { x: 31, y: 22, width: 3, height: 3 },
+                Obstacle { 
+                    x: 6, 
+                    y: 22, 
+                    width: 3, 
+                    height: 3,
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+                Obstacle { 
+                    x: 31, 
+                    y: 22, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
 
                 // Central side barriers
-                Obstacle { x: 12, y: 12, width: 2, height: 5 },
-                Obstacle { x: 26, y: 12, width: 2, height: 5 },
+                Obstacle { 
+                    x: 12, 
+                    y: 12, 
+                    width: 2, 
+                    height: 5, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+                Obstacle { 
+                    x: 26, 
+                    y: 12, 
+                    width: 2, 
+                    height: 5, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
 
                 // Smaller pillars
-                Obstacle { x: 18, y: 5, width: 3, height: 3 },
-                Obstacle { x: 18, y: 23, width: 3, height: 3 },
+                Obstacle { 
+                    x: 18, 
+                    y: 5, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+                Obstacle { 
+                    x: 18, 
+                    y: 23, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+            ],
+        },
+
+        RoomTemplate {
+            width: 30,
+            height: 40,
+            shape: RoomShape::Rectangle,
+            doors: vec![
+                DoorDirection::North,
+                DoorDirection::South,
+                DoorDirection::East,
+                DoorDirection::West,
+            ],
+            obstacles: vec![
+                // Upper pillars
+                Obstacle { 
+                    x: 5, 
+                    y: 7, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar
+                },
+                Obstacle { 
+                    x: 22, 
+                    y: 7, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+
+                // Central barriers
+                Obstacle { 
+                    x: 9, 
+                    y: 17, 
+                    width: 3, 
+                    height: 6, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+                Obstacle { 
+                    x: 9, 
+                    y: 17, 
+                    width: 3, 
+                    height: 6, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+
+                // Lower pillars
+                Obstacle { 
+                    x: 5, 
+                    y: 30, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+                Obstacle { 
+                    x: 22, 
+                    y: 30, 
+                    width: 3, 
+                    height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
             ],
         },
     ]);
@@ -299,11 +422,17 @@ struct RoomTemplate {
     obstacles: Vec<Obstacle>,
 }
 
+enum ObstacleType {
+    Pillar,
+    Barrier,
+}
+
 struct Obstacle {
     x: usize,
     y: usize,
     width: usize,
     height: usize,
+    obstacle_type: ObstacleType,
 }
 
 fn generate_room(
