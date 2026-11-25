@@ -26,11 +26,11 @@ async fn main() {
         zoom: vec2(2.0 / screen_width(), 2.0 / screen_height()),
         ..Default::default()
     };
-    let player_speed: f32 = 200.0;
+    let player_speed: f32 = 600.0;
     let mut player_facing_left = false;
-    let player_texture = load_texture(resolve_path("assets/characters/warrior/Warrior V1.png").to_str().unwrap()).await.unwrap();
+    let player_texture = load_texture(resolve_path("assets/characters/warrior/Warrior V2.png").to_str().unwrap()).await.unwrap();
     player_texture.set_filter(FilterMode::Nearest);
-    let tile_size: f32 = 32.0;
+    let tile_size: f32 = 64.0;
     let dungeon_width: usize = 100;
     let dungeon_height: usize = 100;
     let mut dungeon = vec![vec![0; dungeon_width]; dungeon_height];
@@ -38,37 +38,42 @@ async fn main() {
 
     let combat_rooms = vec![
         RoomTemplate {
-            width: 12,
-            height: 8,
+            width: 40,
+            height: 30,
             shape: RoomShape::Rectangle,
-            doors: vec![DoorDirection::North, DoorDirection::South],
-        },
-        RoomTemplate {
-            width: 10,
-            height: 10,
-            shape: RoomShape::Square,
-            doors: vec![DoorDirection::East, DoorDirection::West],
-        },
-        RoomTemplate {
-            width: 16,
-            height: 10,
-            shape: RoomShape::Rectangle,
-            doors: vec![DoorDirection::North, DoorDirection::South, DoorDirection::East],
-        },
-        RoomTemplate {
-            width: 12,
-            height: 12,
-            shape: RoomShape::Circular,
             doors: vec![DoorDirection::North, DoorDirection::South, DoorDirection::East, DoorDirection::West],
         },
+        //RoomTemplate {
+            //width: 10,
+            //height: 10,
+            //shape: RoomShape::Square,
+            //doors: vec![DoorDirection::East, DoorDirection::West],
+        //},
+        //RoomTemplate {
+            //width: 16,
+            //height: 10,
+            //shape: RoomShape::Rectangle,
+            //doors: vec![DoorDirection::North, DoorDirection::South, DoorDirection::East],
+        //},
+        //RoomTemplate {
+            //width: 12,
+            //height: 12,
+            //shape: RoomShape::Circular,
+            //doors: vec![DoorDirection::North, DoorDirection::South, DoorDirection::East, DoorDirection::West],
+        //},
+        //RoomTemplate {
+
+        //}
     ];
 
     let room_index = rand::gen_range(0, combat_rooms.len());
     let selected_room = &combat_rooms[room_index];
     let room_width = selected_room.width;
     let room_height = selected_room.height;
-    let room_x = rand::gen_range(0,dungeon_width - room_width + 1);
-    let room_y = rand::gen_range(0,dungeon_height - room_height + 1);
+    let room_x = (dungeon_width - room_width) / 2;
+    let room_y = (dungeon_height - room_height) / 2;
+    //let room_x = rand::gen_range(0,dungeon_width - room_width + 1);
+    //let room_y = rand::gen_range(0,dungeon_height - room_height + 1);
 
     generate_room(
         &mut dungeon, 
@@ -80,9 +85,58 @@ async fn main() {
         &selected_room.doors,
     );
 
+    generate_obstacles(
+        &mut dungeon, 
+        room_x, 
+        room_y,
+    );
+
+    fn is_solid_tile(
+        dungeon: &Vec<Vec<i32>>,
+        tile_x: usize,
+        tile_y: usize,
+    ) -> bool {
+        dungeon[tile_y][tile_x] == 2 || dungeon[tile_y][tile_x] == 3
+    }
+
+    fn check_collision(
+        dungeon: &Vec<Vec<i32>>,
+        player_x: f32,
+        player_y: f32,
+        player_size: f32,
+        tile_size: f32,
+    ) -> bool {
+        let corners = [
+            (player_x, player_y),
+            (player_x, player_y + player_size),
+            (player_x, player_y + player_size),
+            (player_x +player_size, player_y + player_size),
+        ];
+
+        for (x, y) in corners {
+            let tile_x = (x / tile_size) as usize;
+            let tile_y = (y / tile_size) as usize;
+
+            if tile_y >= dungeon.len() || tile_x >= dungeon[0].len() {
+                return true;
+            }
+
+            if is_solid_tile(dungeon, tile_x, tile_y) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    player_x = (room_x as f32 + room_width as f32 / 2.0) * tile_size - 64.0;
+    player_y = (room_y as f32 + room_height as f32 / 2.0) * tile_size - 64.0;
     // test to see if macroquad is working
     loop {
         clear_background(BLACK);
+
+        let mut move_x = 0.0;
+        let mut move_y = 0.0;
 
         if is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) {
             player_y -= player_speed * get_frame_time();
@@ -101,6 +155,20 @@ async fn main() {
         if is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) {
             player_x += player_speed * get_frame_time();
             player_facing_left = false;
+        }
+
+        let movement = vec2(move_x, move_y).normalize_or_zero() * player_speed * get_frame_time();
+
+        let next_x = player_x + movement.x;
+
+        if !check_collision(&dungeon, next_x, player_y, 64.0, tile_size) {
+            player_x = next_x;
+        }
+
+        let next_y = player_y + movement.y;
+
+        if !check_collision(&dungeon, player_x, next_y, 64.0, tile_size) {
+            player_y = next_y;
         }
 
         let view_width = screen_width();
@@ -140,7 +208,8 @@ async fn main() {
                     0 => BLACK,
                     1 => GRAY,
                     2 => DARKGRAY,
-                    _ => BLACK
+                    3 => Color::new(0.35, 0.30, 0.25, 1.0),
+                    _ => BLACK,
                 };
 
                 draw_rectangle(
@@ -178,22 +247,22 @@ async fn main() {
 
     
 
-            if player_x < 0.0 {
-                player_x = 0.0;
-            }
+            //if player_x < 0.0 {
+                //player_x = 0.0;
+            //}
         
 
-            if player_x > world_width - 64.0 {
-                player_x = world_width - 64.0;
-            }
+            //if player_x > world_width - 64.0 {
+                //player_x = world_width - 64.0;
+            //}
 
-            if player_y < 0.0 {
-                player_y = 0.0;
-            }
+            //if player_y < 0.0 {
+                //player_y = 0.0;
+            //}
 
-            if player_y > world_height - 64.0 {
-                player_y = world_height - 64.0;
-            }
+            //if player_y > world_height - 64.0 {
+                //player_y = world_height - 64.0;
+            //}
 
         set_default_camera();
 
@@ -232,6 +301,7 @@ fn generate_room(
     room_shape: &RoomShape,
     room_doors: &[DoorDirection],
 ) {
+
 
 let (room_width, room_height) = match room_shape {
     RoomShape::Rectangle => (room_width, room_height),
@@ -305,6 +375,34 @@ for y in start_y..start_y + room_height {
 
         //dungeon[door_y][door_x] = 1; //create a door in the dungeon
     //}
+}
+
+fn generate_obstacles(
+    dungeon: &mut Vec<Vec<i32>>, 
+    room_x: usize,
+    room_y: usize,
+) {
+    let obstacles = [
+        (8, 6),
+        (30, 6),
+        (8, 22),
+        (30, 22),
+        (15, 5),
+        (23, 5),
+        (15, 24),
+        (23, 24),
+    ];
+
+    for (offset_x, offset_y) in obstacles {
+        let start_x = room_x + offset_x;
+        let start_y = room_y + offset_y;
+
+        for y in start_y..start_y + 2 {
+            for x in start_x..start_x + 2 {
+                dungeon[y][x] = 3; // Set the tile to obstacle
+            }
+        }
+    }
 }
 
 //676767676767676767676767676767
