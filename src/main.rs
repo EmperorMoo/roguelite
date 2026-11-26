@@ -92,7 +92,7 @@ async fn main() {
                     width: 2, 
                     height: 5, 
                     obstacle_type:
-                ObstacleType::Pillar,
+                ObstacleType::Barrier,
                 },
                 Obstacle { 
                     x: 26, 
@@ -100,7 +100,7 @@ async fn main() {
                     width: 2, 
                     height: 5, 
                     obstacle_type:
-                ObstacleType::Pillar,
+                ObstacleType::Barrier,
                 },
 
                 // Smaller pillars
@@ -159,7 +159,7 @@ async fn main() {
                     width: 3, 
                     height: 6, 
                     obstacle_type:
-                ObstacleType::Pillar,
+                ObstacleType::Barrier,
                 },
                 Obstacle { 
                     x: 9, 
@@ -167,7 +167,7 @@ async fn main() {
                     width: 3, 
                     height: 6, 
                     obstacle_type:
-                ObstacleType::Pillar,
+                ObstacleType::Barrier,
                 },
 
                 // Lower pillars
@@ -184,6 +184,73 @@ async fn main() {
                     y: 30, 
                     width: 3, 
                     height: 3, 
+                    obstacle_type:
+                ObstacleType::Pillar,
+                },
+            ],
+        },
+
+        RoomTemplate {
+            width: 40,
+            height: 30,
+            shape: RoomShape::Rectangle,
+            doors: vec![
+                DoorDirection::North,
+                DoorDirection::South,
+                DoorDirection::East,
+                DoorDirection::West,
+            ],
+            obstacles: vec![
+                // Upper pits
+                Obstacle {
+                    x:6,
+                    y:7,
+                    width: 7,
+                    height: 5,
+                    obstacle_type:
+                ObstacleType::Pit,
+                },
+                Obstacle {
+                    x: 27,
+                    y: 7,
+                    width: 7,
+                    height: 5,
+                    obstacle_type:
+                ObstacleType::Pit
+                },
+
+                // Lower pits
+                Obstacle {
+                    x: 6,
+                    y: 18,
+                    width: 7,
+                    height: 5,
+                    obstacle_type:
+                ObstacleType::Pit,
+                },
+                Obstacle {
+                    x: 27,
+                    y: 18,
+                    width: 7,
+                    height: 5,
+                    obstacle_type:
+                ObstacleType::Pit,
+                },
+
+                // Central pillars
+                Obstacle {
+                    x: 18,
+                    y: 8,
+                    width: 3,
+                    height: 3,
+                    obstacle_type:
+                ObstacleType::Pillar
+                },
+                Obstacle {
+                    x: 18,
+                    y: 19,
+                    width: 3,
+                    height: 3,
                     obstacle_type:
                 ObstacleType::Pillar,
                 },
@@ -244,7 +311,9 @@ async fn main() {
         tile_x: usize,
         tile_y: usize,
     ) -> bool {
-        dungeon[tile_y][tile_x] == 2 || dungeon[tile_y][tile_x] == 3
+        dungeon[tile_y][tile_x] == 2 || 
+        dungeon[tile_y][tile_x] == 3 ||
+        dungeon[tile_y][tile_x] == 4
     }
 
     fn check_collision(
@@ -357,6 +426,8 @@ async fn main() {
                     1 => GRAY,
                     2 => DARKGRAY,
                     3 => Color::new(0.35, 0.30, 0.25, 1.0),
+                    4 => Color::new(0.25, 0.35, 0.45, 1.0),
+                    5 => Color::new(0.08, 0.08, 0.12, 1.0),
                     _ => BLACK,
                 };
 
@@ -425,6 +496,7 @@ struct RoomTemplate {
 enum ObstacleType {
     Pillar,
     Barrier,
+    Pit,
 }
 
 struct Obstacle {
@@ -533,7 +605,12 @@ fn generate_obstacles(
         for y in start_y..start_y + obstacle.height{
 
             for x in start_x..start_x + obstacle.width {
-                dungeon[y][x] = 3;
+                dungeon[y][x] = match
+                obstacle.obstacle_type {
+                    ObstacleType::Pillar => 3,
+                    ObstacleType::Barrier => 4,
+                    ObstacleType::Pit => 5,
+                }
             }
         }
     }
