@@ -19,6 +19,7 @@ async fn main() {
     rand::srand(macroquad::miniquad::date::now() as u64);
 
     let mut player_health = 100;
+    let mut game_over = false;
     let mut player_x: f32 = 400.0;
     let mut player_y: f32 = 300.0;
     let mut camera = Camera2D {
@@ -34,6 +35,7 @@ async fn main() {
     let dungeon_width: usize = 100;
     let dungeon_height: usize = 100;
     let mut dungeon = vec![vec![0; dungeon_width]; dungeon_height];
+    let mut was_on_pit = false;
 
 
     let combat_rooms: Vec<RoomTemplate> = Vec::from([
@@ -316,6 +318,40 @@ async fn main() {
         dungeon[tile_y][tile_x] == 4
     }
 
+    fn is_pit_tile(
+        dungeon: &Vec<Vec<i32>>,
+        tile_x: usize,
+        tile_y: usize,
+    ) -> bool {
+        dungeon[tile_y][tile_x] == 5
+    }
+
+    fn check_pit_collison(
+        dungeon: &Vec<Vec<i32>>,
+        player_x: f32,
+        player_y: f32,
+        tile_size: f32,
+    ) -> bool {
+        let foot_points = [
+            (player_x + 32.0, player_y + 120.0),
+            (player_x + 64.0, player_y + 120.0),
+            (player_x + 96.0, player_y + 120.0),
+        ];
+
+        for (x, y) in foot_points {
+            let tile_x = (x / tile_size) as usize;
+            let tile_y = (y / tile_size) as usize;
+
+            if tile_y < dungeon.len() 
+            && tile_x < dungeon[0].len()
+            && is_pit_tile(dungeon, tile_x, tile_y)
+            {
+                return true;
+            }
+        }
+        false
+    }
+
     fn check_collision(
         dungeon: &Vec<Vec<i32>>,
         player_x: f32,
@@ -352,6 +388,8 @@ async fn main() {
     loop {
         clear_background(BLACK);
 
+        if !game_over {
+
         let mut move_x = 0.0;
         let mut move_y = 0.0;
 
@@ -381,11 +419,30 @@ async fn main() {
         if !check_collision(&dungeon, next_x, player_y, 128.0, tile_size) {
             player_x = next_x;
         }
+    
 
         let next_y = player_y + movement.y;
 
         if !check_collision(&dungeon, player_x, next_y, 128.0, tile_size) {
             player_y = next_y;
+        }
+    }
+
+        let on_pit = check_pit_collison(
+            &dungeon,
+            player_x,
+            player_y,
+            tile_size,
+        );
+
+        if on_pit && !was_on_pit {
+            player_health = (player_health - 10).max(0);
+        }
+
+        was_on_pit = on_pit;
+
+        if player_health <= 0 {
+            game_over = true;
         }
 
         let view_width = screen_width();
@@ -465,6 +522,46 @@ async fn main() {
         );
 
         set_default_camera();
+
+        // Health bar background
+        draw_rectangle(
+            20.0,
+            20.0,
+            200.0,
+            25.0,
+            DARKGRAY,
+        );
+        
+        // Calculate health bar width
+        let health_width = 200.0 * (player_health as f32 / 100.0);
+
+        // Health bar fill
+         draw_rectangle(
+            20.0,
+            20.0,
+            health_width,
+            25.0,
+            GREEN,
+         );
+
+        draw_text(
+            &format!("Health: {}",
+        player_health),
+            20.0,
+            40.0,
+            30.0,
+            WHITE,
+        );
+
+        if game_over {
+            draw_text(
+                "RUN OVER",
+                screen_width() / 2.0 - 150.0,
+                screen_height() / 2.0,
+                50.0,
+                RED,
+            );
+        }
 
         next_frame().await;
 
