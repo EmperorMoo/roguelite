@@ -385,6 +385,9 @@ async fn main() {
     player_x = (room_x as f32 + room_width as f32 / 2.0) * tile_size - 64.0;
     player_y = (room_y as f32 + room_height as f32 / 2.0) * tile_size - 64.0;
 
+    let spawn_x = player_x;
+    let spawn_y = player_y;
+
     loop {
         clear_background(BLACK);
 
@@ -561,7 +564,25 @@ async fn main() {
                 50.0,
                 RED,
             );
+
+            draw_text(
+                "Press R to restart",
+                screen_width() / 2.0 - 150.0,
+                screen_height() / 2.0 + 50.0,
+                30.0,
+                WHITE,
+            );
+
+            if is_key_pressed(KeyCode::R) {
+                player_health = 100;
+                player_x = spawn_x;
+                player_y = spawn_y;
+                was_on_pit = false;
+                game_over = false;
+            }
         }
+
+
 
         next_frame().await;
 
