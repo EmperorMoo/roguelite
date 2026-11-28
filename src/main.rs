@@ -19,6 +19,7 @@ async fn main() {
     rand::srand(macroquad::miniquad::date::now() as u64);
 
     let mut player_health = 100;
+    let mut damage_cooldown = 0.0;
     let mut game_over = false;
     let mut player_x: f32 = 400.0;
     let mut player_y: f32 = 300.0;
@@ -36,6 +37,7 @@ async fn main() {
     let dungeon_height: usize = 100;
     let mut dungeon = vec![vec![0; dungeon_width]; dungeon_height];
     let mut was_on_pit = false;
+    let mut can_take_pit_damage = true;
 
 
     let combat_rooms: Vec<RoomTemplate> = Vec::from([
@@ -332,15 +334,14 @@ async fn main() {
         player_y: f32,
         tile_size: f32,
     ) -> bool {
-        let foot_points = [
-            (player_x + 32.0, player_y + 120.0),
-            (player_x + 64.0, player_y + 120.0),
-            (player_x + 96.0, player_y + 120.0),
-        ];
+        let foot_y = player_y + 120.0;
 
-        for (x, y) in foot_points {
-            let tile_x = (x / tile_size) as usize;
-            let tile_y = (y / tile_size) as usize;
+        let start_x = (player_x / tile_size) as usize;
+        let end_x = ((player_x + 127.0) / tile_size) as usize;
+
+        let tile_y = (foot_y / tile_size) as usize;
+
+        for tile_x in start_x..=end_x {
 
             if tile_y < dungeon.len() 
             && tile_x < dungeon[0].len()
@@ -389,6 +390,14 @@ async fn main() {
     let spawn_y = player_y;
 
     loop {
+
+        if damage_cooldown > 0.0 {
+            damage_cooldown -= get_frame_time();
+
+            if damage_cooldown < 0.0 {
+                damage_cooldown = 0.0;
+            }
+        }
         clear_background(BLACK);
 
         if !game_over {
@@ -438,8 +447,14 @@ async fn main() {
             tile_size,
         );
 
-        if on_pit && !was_on_pit {
+        if on_pit && can_take_pit_damage && damage_cooldown <= 0.0 {
             player_health = (player_health - 10).max(0);
+            damage_cooldown = 1.0;
+            can_take_pit_damage = false;
+        }
+
+        if !on_pit && damage_cooldown <= 0.0 {
+            can_take_pit_damage = true;
         }
 
         was_on_pit = on_pit;
@@ -516,7 +531,11 @@ async fn main() {
             &player_texture,
             player_x,
             player_y,
-            WHITE,
+            if damage_cooldown > 0.0 && (damage_cooldown * 10.0) as i32 % 2 == 0 {
+                RED
+            } else {
+                WHITE
+            },
             DrawTextureParams {
                 dest_size: Some(vec2(128.0, 128.0)),
                 flip_x: player_facing_left,
